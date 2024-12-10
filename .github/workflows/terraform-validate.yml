@@ -1,0 +1,32 @@
+name: Terraform Validate
+run-name: ${{ github.actor }} triggered Terraform validation
+
+on:
+  workflow_dispatch: # Allows manual trigger
+  push:
+    branches:
+      - infra_features # Trigger on pushes to infra_features branch
+    paths:
+      - 'terraform/**' # Only trigger if files in the terraform directory change
+
+jobs:
+  validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Initialize Terraform
+        id: init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Validate Terraform
+        id: validate
+        run: terraform validate
+        working-directory: ./terraform
