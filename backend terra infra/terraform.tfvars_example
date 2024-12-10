@@ -1,0 +1,2 @@
+s3_bucket_name      = "" #insert a unique s3 bucket name 
+dynamodb_table_name = "" #insert a dynamodb name

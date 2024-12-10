@@ -1,0 +1,116 @@
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SERVER_DOMAIN={{ domain_name }}
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_AUTH_PROXY_ENABLED=false
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_SECURITY_COOKIE_SAMESITE=none
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SESSION_PROVIDER=memory
+      - GF_SESSION_PROVIDER_CONFIG=sessions
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards   # Preloaded dashboards
+      - ./monitoring/datasources:/etc/grafana/provisioning/datasources # Data sources
+      - ./monitoring/provisioning:/etc/grafana/provisioning/dashboards # Dashboard providers
+    networks:
+      - shared-network
+    labels:
+      - traefik.enable=true
+      # HTTP Service
+      - traefik.http.services.grafana.loadbalancer.server.port=3000 # important
+      # HTTP Router
+      - traefik.http.routers.grafana-http.rule=((Host(`{{ domain_name }}`) || Host(`www.{{ domain_name }}`)) && PathPrefix(`/grafana`))
+      - traefik.http.routers.grafana-http.entrypoints=web
+      # HTTP to HTTPS redirect
+      - traefik.http.routers.grafana-https.middlewares=www-to-non-www
+      # HTTPS Router
+      - traefik.http.routers.grafana-https.rule=((Host(`{{ domain_name }}`) || Host(`www.{{ domain_name }}`)) && PathPrefix(`/grafana`))
+      - traefik.http.routers.grafana-https.entrypoints=websecure
+      - traefik.http.routers.grafana-https.tls.certresolver=letsencryptresolver
+      - traefik.http.routers.grafana-https.service=grafana # optional
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.external-url=/prometheus'
+      - '--web.route-prefix=/prometheus'
+    expose:
+      - "9090"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus 
+      - prom_data:/prometheus
+    depends_on:
+      - cadvisor
+    networks:
+      - shared-network
+    labels:
+      - traefik.enable=true
+      # HTTP Service
+      - traefik.http.services.prometheus.loadbalancer.server.port=9090 # important
+      # HTTP Router
+      - traefik.http.routers.prometheus-http.rule=((Host(`{{ domain_name }}`) || Host(`www.{{ domain_name }}`)) && PathPrefix(`/prometheus`))
+      - traefik.http.routers.prometheus-http.entrypoints=web
+      # www to non-www redirect
+      - traefik.http.routers.prometheus-https.middlewares=www-to-non-www
+      # HTTPS Router
+      - traefik.http.routers.prometheus-https.rule=((Host(`{{ domain_name }}`) || Host(`www.{{ domain_name }}`)) && PathPrefix(`/prometheus`))
+      - traefik.http.routers.prometheus-https.entrypoints=websecure
+      - traefik.http.routers.prometheus-https.tls.certresolver=letsencryptresolver
+      - traefik.http.routers.prometheus-https.service=prometheus # optional
+    
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    expose:
+      - "8080"  
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - shared-network
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    user: "10001"
+    volumes:
+      - ./loki-config.yaml:/mnt/config/loki-config.yaml
+      - ./data:/tmp/loki
+    expose:
+      - "3100"
+    command: -config.file=/mnt/config/loki-config.yaml
+    networks:
+      - shared-network
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    depends_on:
+      - loki
+    volumes:
+      - ./promtail-config.yaml:/mnt/config/promtail-config.yaml
+      - /var/log:/var/log
+    command: -config.file=/mnt/config/promtail-config.yaml
+    networks:
+      - shared-network
+
+volumes:
+  grafana-storage:
+  prom_data:
+
+networks:
+  shared-network:
+    external: true
