@@ -1,5 +1,5 @@
 variable "ami_id" {
-  description = "This is the ami ID for the instance"
+  description = "This is the ami ID for the instance, this is a test to trigger workflow"
   type        = string
 }
 
