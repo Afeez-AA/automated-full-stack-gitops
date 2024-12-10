@@ -10,23 +10,18 @@ on:
       - 'terraform/**' # Only trigger if files in the terraform directory change
 
 jobs:
-  validate:
-    name: Terraform Validate
+  build-infra:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
-
-      - name: Initialize Terraform
+      - name: Terraform Init
         id: init
         run: terraform init
-        working-directory: terraform
-
-      - name: Validate Terraform
+        working-directory: ./terraform  # Ensure this is correct
+      - name: Terraform Validate
         id: validate
         run: terraform validate
-        working-directory: terraform
+        working-directory: ./terraform
