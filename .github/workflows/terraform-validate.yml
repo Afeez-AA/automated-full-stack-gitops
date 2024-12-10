@@ -10,8 +10,10 @@ on:
       - 'terraform/**' # Only trigger if files in the terraform directory change
 
 jobs:
-  build-infra:
+  validate:
+    name: Terraform Validate
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
