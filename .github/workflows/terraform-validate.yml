@@ -24,9 +24,9 @@ jobs:
       - name: Initialize Terraform
         id: init
         run: terraform init
-        working-directory: ./terraform
+        working-directory: terraform
 
       - name: Validate Terraform
         id: validate
         run: terraform validate
-        working-directory: ./terraform
+        working-directory: terraform
