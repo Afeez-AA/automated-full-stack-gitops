@@ -1,5 +1,5 @@
 variable "ami_id" {
-  description = "This is the ami ID for the instance, this is a test to trigger workflow"
+  description = "This is the ami ID for the instance"
   type        = string
 }
 
@@ -9,7 +9,7 @@ variable "instance_type" {
 }
 
 variable "key_pair_name" {
-  description = "The name of the EC2 key pair"
+  description = "The name of the EC2 key pair, test again"
   type        = string
 }
 
