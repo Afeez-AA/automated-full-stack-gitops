@@ -48,5 +48,5 @@ jobs:
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate -lock=false
+        run: terraform validate
         working-directory: terraform
