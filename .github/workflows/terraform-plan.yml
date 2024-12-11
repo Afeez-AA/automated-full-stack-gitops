@@ -33,10 +33,16 @@ jobs:
     name: Terraform Plan and Cost Estimation
     runs-on: ubuntu-latest
 
-    steps:
-      # Checkout the code
-      - name: Checkout Code
+      - name: Checkout PR Branch
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Debug Branch Information
+        run: |
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head branch: ${{ github.head_ref }}"
+          echo "Current branch: $(git branch --show-current)"
       
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
