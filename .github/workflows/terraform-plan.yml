@@ -1,3 +1,154 @@
+# name: Terraform Plan with Cost Estimation
+
+# on:
+#   workflow_dispatch:
+#   pull_request:
+#     branches:
+#       - infra_main
+#     types:
+#       - opened
+#       - synchronize
+#       - reopened
+# permissions:
+#   pull-requests: write
+
+# env:
+#   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+
+#   # Terraform Variables
+#   TF_VAR_ami_id: ${{ vars.AMI_ID }}
+#   TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
+#   TF_VAR_key_pair_name: ${{ vars.KEY_PAIR_NAME }}
+#   TF_VAR_instance_name: ${{ vars.INSTANCE_NAME }}
+#   TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+#   TF_VAR_frontend_domain: ${{ vars.FRONTEND_DOMAIN }}
+#   TF_VAR_db_domain: ${{ vars.DB_DOMAIN }}
+#   TF_VAR_traefik_domain: ${{ vars.TRAEFIK_DOMAIN }}
+#   TF_VAR_grafana_domain: ${{ vars.GRAFANA_DOMAIN }}
+#   TF_VAR_prometheus_domain: ${{ vars.PROMETHEUS_DOMAIN }}
+#   TF_VAR_cert_email: ${{ vars.CERT_EMAIL }}
+#   TF_VAR_private_key_path: ${{ vars.PRIVATE_KEY_PATH }}
+#   TF_VAR_app_dir: ${{ vars.APP_DIR }}
+
+# jobs:
+#   terraform-plan:
+#     name: Terraform Plan and Cost Estimation
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout PR Branch
+#         uses: actions/checkout@v3
+#         with:
+#           ref: ${{ github.head_ref }}
+
+#       - name: Debug Branch Information
+#         run: |
+#           echo "Base branch: ${{ github.base_ref }}"
+#           echo "Head branch: ${{ github.head_ref }}"
+#           echo "Current branch: $(git branch --show-current)"
+      
+#       - name: Set Terraform Variables
+#         run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+      
+#       - name: Set up Terraform
+#         uses: hashicorp/setup-terraform@v2
+
+#       - name: Format Terraform Files
+#         run: terraform fmt -check
+#         working-directory: terraform
+
+#       - name: Initialize Terraform
+#         run: terraform init
+#         working-directory: terraform
+
+#       - name: Generate Terraform Plan
+#         id: plan
+#         run: terraform plan -out=tfplan -lock=false
+#         working-directory: terraform
+
+#       - name: Save Plan JSON
+#         id: save-plan
+#         run: terraform show -no-color tfplan > /opt/tfplan.txt
+#         working-directory: terraform
+
+#       - name: Install Infracost
+#         run: |
+#           curl -s https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+#           infracost configure set api_key ${{ secrets.INFRACOST_API_KEY }}
+
+#       - name: Generate Infracost Breakdown
+#         run: infracost breakdown --path terraform --format json > /opt/infracost-legacy.json
+#         working-directory: terraform
+
+#       - name: Generate Infracost Diff
+#         run: |
+#           infracost diff --path=terraform \
+#                          --compare-to=/opt/infracost-legacy.json \
+#                          --format=json \
+#                          --out-file=/opt/infracost.json
+#         working-directory: terraform
+
+#       - name: Post Infracost Comment
+#         run: |
+#           infracost comment github --path=/opt/infracost-diff.json \
+#                                    --repo=$GITHUB_REPOSITORY \
+#                                    --github-token=${{ secrets.GITHUB_TOKEN }} \
+#                                    --pull-request=${{ github.event.pull_request.number }} \
+#                                    --behavior=update
+
+#       - name: Post Terraform and Infracost Summary to PR
+#         uses: actions/github-script@v6
+#         if: github.event_name == 'pull_request'
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           script: |
+#             const fs = require('fs');
+
+#             // Read the Terraform Plan and Infracost Breakdown
+#             const planOutput = fs.readFileSync('/opt/tfplan.txt', 'utf8');
+#             const infracostBreakdown = fs.readFileSync('/opt/infracost-legacy.json', 'utf8');
+
+#             // Truncate long plan output for comments
+#             const truncatedPlan = planOutput.length > 6000 ? `${planOutput.slice(0, 6000)}\n... (truncated)` : planOutput;
+
+#             const commentBody = `
+#             ### Terraform Plan Summary 📜
+#             #### Workflow Run: #${{ github.run_number }}
+            
+#             <details>
+#             <summary>Terraform Plan</summary>
+            
+#             \`\`\`hcl
+#             ${truncatedPlan}
+#             \`\`\`
+            
+#             </details>
+            
+#             ---
+            
+#             ### Cost Estimation 💰
+#             <details>
+#             <summary>Infracost Breakdown</summary>
+            
+#             \`\`\`json
+#             ${infracostBreakdown}
+#             \`\`\`
+            
+#             </details>
+            
+#             *Generated by @${{ github.actor }} on Workflow: "${{ github.workflow }}"*
+#             `;
+            
+#             github.rest.issues.createComment({
+#               issue_number: context.issue.number,
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               body: commentBody,
+#             });
+            
+
 name: Terraform Plan with Cost Estimation
 
 on:
@@ -11,13 +162,26 @@ on:
       - reopened
 permissions:
   pull-requests: write
-  actions: write
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
-  # ... (keep other existing environment variables)
+ 
+  # Terraform Variables
+  TF_VAR_ami_id: ${{ vars.AMI_ID }}
+  TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
+  TF_VAR_key_pair_name: ${{ vars.KEY_PAIR_NAME }}
+  TF_VAR_instance_name: ${{ vars.INSTANCE_NAME }}
+  TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+  TF_VAR_frontend_domain: ${{ vars.FRONTEND_DOMAIN }}
+  TF_VAR_db_domain: ${{ vars.DB_DOMAIN }}
+  TF_VAR_traefik_domain: ${{ vars.TRAEFIK_DOMAIN }}
+  TF_VAR_grafana_domain: ${{ vars.GRAFANA_DOMAIN }}
+  TF_VAR_prometheus_domain: ${{ vars.PROMETHEUS_DOMAIN }}
+  TF_VAR_cert_email: ${{ vars.CERT_EMAIL }}
+  TF_VAR_private_key_path: ${{ vars.PRIVATE_KEY_PATH }}
+  TF_VAR_app_dir: ${{ vars.APP_DIR }}
 
 jobs:
   terraform-plan:
@@ -36,6 +200,15 @@ jobs:
           ref: ${{ github.base_ref }}
           path: base-branch
 
+      - name: Debug Branch Information
+        run: |
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head branch: ${{ github.head_ref }}"
+          echo "Current branch: $(git branch --show-current)"
+      
+      - name: Set Terraform Variables
+        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+      
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
@@ -50,8 +223,8 @@ jobs:
       - name: Generate Terraform Plan
         id: plan
         run: |
-          terraform plan -out=tfplan -lock=false > /opt/terraform-plan-full.txt
-          terraform show -no-color tfplan > /opt/terraform-plan-summary.txt
+          terraform plan -out=tfplan -lock=false -no-color | tee /opt/terraform-plan-output.txt
+          terraform show -no-color tfplan > /opt/tfplan.txt
         working-directory: terraform
 
       - name: Install Infracost
@@ -59,38 +232,64 @@ jobs:
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
-      - name: Generate Cost Breakdown
+      - name: Generate Base Branch Cost Breakdown
+        run: |
+          cd base-branch/terraform
+          infracost breakdown --path=. --format=json --out-file=/opt/infracost-base.json
+        continue-on-error: true
+
+      - name: Generate Current Branch Cost Breakdown
         run: |
           cd terraform
           infracost breakdown --path=. --format=table > /opt/infracost-breakdown.txt
-          infracost breakdown --path=. --format=json > /opt/infracost-breakdown.json
+          infracost breakdown --path=. --format=json > /opt/infracost-current.json
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: workflow-outputs
-          path: |
-            /opt/terraform-plan-full.txt
-            /opt/terraform-plan-summary.txt
-            /opt/infracost-breakdown.txt
-            /opt/infracost-breakdown.json
-          retention-days: 1
+      - name: Generate Infracost Diff
+        run: |
+          cd terraform
+          infracost diff \
+            --path=. \
+            --compare-to=/opt/infracost-base.json \
+            --format=json \
+            --out-file=/opt/infracost-diff.json || true
+        continue-on-error: true
 
-      - name: Post PR Comment
+      - name: Prepare Workflow Summary
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs');
+            
+            // Read files
+            const planOutput = fs.readFileSync('/opt/terraform-plan-output.txt', 'utf8');
+            const infracostBreakdown = fs.readFileSync('/opt/infracost-breakdown.txt', 'utf8');
+            
+            // Truncate long outputs
+            const truncatedPlan = planOutput.length > 3000 
+              ? `${planOutput.slice(0, 3000)}...\n(Plan output truncated)` 
+              : planOutput;
+            
+            const truncatedInfracost = infracostBreakdown.length > 3000
+              ? `${infracostBreakdown.slice(0, 3000)}...\n(Cost breakdown truncated)`
+              : infracostBreakdown;
+            
             const commentBody = `### 🔍 Workflow Analysis
 
-            | Terraform Plan | Cost Estimation |
-            |---------------|-----------------|
-            | [View Plan Details](./artifacts/workflow-outputs/terraform-plan-summary.txt) | [View Cost Breakdown](./artifacts/workflow-outputs/infracost-breakdown.txt) |
+            #### Terraform Plan Insights
+            \`\`\`
+            ${truncatedPlan}
+            \`\`\`
+
+            #### Cost Estimation Overview
+            \`\`\`
+            ${truncatedInfracost}
+            \`\`\`
 
             *Workflow Executed by @${{ github.actor }}*`;
-
-            await github.rest.issues.createComment({
+            
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
