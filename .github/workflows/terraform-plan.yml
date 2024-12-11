@@ -261,9 +261,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const { context, github } = require('@actions/github');
+            const artifact = require('@actions/artifact');
 
-            // Create comment with minimal information
             const commentBody = `### 🔍 Workflow Analysis
 
             | Terraform Plan | Cost Estimation |
@@ -273,7 +272,7 @@ jobs:
             *Workflow Executed by @${{ github.actor }}*`;
 
             // Create comment
-            const comment = await github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -288,14 +287,13 @@ jobs:
               { name: 'infracost-breakdown.json', path: '/opt/infracost-breakdown.json' }
             ];
 
-            const { uploadArtifact } = require('@actions/artifact');
-            const artifactClient = uploadArtifact();
+            const artifactClient = artifact.create();
 
-            for (const artifact of artifacts) {
+            for (const artif of artifacts) {
               try {
                 await artifactClient.uploadArtifact(
-                  artifact.name, 
-                  [artifact.path], 
+                  artif.name, 
+                  [artif.path], 
                   './', 
                   { 
                     compressionLevel: 9,
@@ -303,7 +301,7 @@ jobs:
                   }
                 );
               } catch (error) {
-                console.error(`Failed to upload artifact ${artifact.name}:`, error);
+                console.error(`Failed to upload artifact ${artif.name}:`, error);
               }
             }
 
