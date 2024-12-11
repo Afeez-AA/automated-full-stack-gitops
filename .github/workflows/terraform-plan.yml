@@ -33,6 +33,8 @@ jobs:
     name: Terraform Plan and Cost Estimation
     runs-on: ubuntu-latest
 
+
+    steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v3
         with:
@@ -54,7 +56,7 @@ jobs:
 
       # Generate Terraform Plan
       - name: Generate Terraform Plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -out=tfplan -lock=false
         working-directory: terraform
 
       # Post Terraform Plan as Comment
