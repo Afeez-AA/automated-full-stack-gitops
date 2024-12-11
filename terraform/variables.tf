@@ -9,7 +9,7 @@ variable "instance_type" {
 }
 
 variable "key_pair_name" {
-  description = "The name of the EC2 key pair, test again"
+  description = "The name of the EC2 key pair"
   type        = string
 }
 
@@ -39,7 +39,8 @@ variable "sg-name" {
   default     = "MainSG"
 }
 
-variable "instace_name" {
+
+variable "instance_name" {
   description = "Name of the Instance"
   type        = string
 }
