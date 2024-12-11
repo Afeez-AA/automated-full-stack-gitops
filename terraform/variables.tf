@@ -39,7 +39,7 @@ variable "sg-name" {
   default     = "MainSG"
 }
 
-variable "instace_name" {
+variable "instance_name" {
   description = "Name of the Instance"
   type        = string
 }
