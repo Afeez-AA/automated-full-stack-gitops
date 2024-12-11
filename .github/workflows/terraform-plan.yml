@@ -100,7 +100,7 @@ jobs:
             --format=json > /tmp/cost_difference.json || true
         continue-on-error: true
 
-      - name: Prepare Workflow Report
+            - name: Prepare Workflow Report
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         with:
@@ -108,33 +108,24 @@ jobs:
           script: |
             const fs = require('fs');
             
-            const planContent = fs.readFileSync('/tmp/plan_output.txt', 'utf8')
-              .split('\n')
-              .slice(0, 50)
-              .join('\n');
-            
-            const costSummary = fs.readFileSync('/tmp/cost_summary.txt', 'utf8')
-              .split('\n')
-              .slice(0, 30)
-              .join('\n');
+            const planContent = fs.readFileSync('/tmp/plan_output.txt', 'utf8');
+            const costSummary = fs.readFileSync('/tmp/cost_summary.txt', 'utf8');
             
             const commentBody = `### 🔍 Infrastructure Validation Report
 
             <details>
-            <summary>📋 Terraform Execution Plan</summary>
+            <summary>**📋 Comprehensive Terraform Execution Plan**</summary>
 
             \`\`\`terraform
             ${planContent}
-            ${planContent.length >= 50 * 80 ? '\n... [Plan truncated]' : ''}
             \`\`\`
             </details>
 
             <details>
-            <summary>💰 Resource Cost Projection</summary>
+            <summary>**💰 Detailed Resource Cost Projection**</summary>
 
             \`\`\`
             ${costSummary}
-            ${costSummary.length >= 30 * 80 ? '\n... [Cost summary truncated]' : ''}
             \`\`\`
             </details>
 
