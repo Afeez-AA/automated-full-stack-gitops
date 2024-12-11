@@ -65,7 +65,7 @@ jobs:
 
       - name: Generate Terraform Plan
         id: plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -out=tfplan -lock=false
         working-directory: terraform
 
       - name: Save Plan JSON
