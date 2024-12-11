@@ -254,44 +254,97 @@ jobs:
             --out-file=/opt/infracost-diff.json || true
         continue-on-error: true
 
-      - name: Prepare Workflow Summary
+      - name: Post PR Comment and Attach Files
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            
-            // Read files
-            const planOutput = fs.readFileSync('/opt/terraform-plan-output.txt', 'utf8');
-            const infracostBreakdown = fs.readFileSync('/opt/infracost-breakdown.txt', 'utf8');
-            
-            // Truncate long outputs
-            const truncatedPlan = planOutput.length > 3000 
-              ? `${planOutput.slice(0, 3000)}...\n(Plan output truncated)` 
-              : planOutput;
-            
-            const truncatedInfracost = infracostBreakdown.length > 3000
-              ? `${infracostBreakdown.slice(0, 3000)}...\n(Cost breakdown truncated)`
-              : infracostBreakdown;
-            
+            const { context, github } = require('@actions/github');
+
+            // Create comment with minimal information
             const commentBody = `### 🔍 Workflow Analysis
 
-            #### Terraform Plan Insights
-            \`\`\`
-            ${truncatedPlan}
-            \`\`\`
-
-            #### Cost Estimation Overview
-            \`\`\`
-            ${truncatedInfracost}
-            \`\`\`
+            | Terraform Plan | Cost Estimation |
+            |---------------|-----------------|
+            | [View Plan Details](./artifacts/terraform-plan-summary.txt) | [View Cost Breakdown](./artifacts/infracost-breakdown.txt) |
 
             *Workflow Executed by @${{ github.actor }}*`;
-            
-            github.rest.issues.createComment({
+
+            // Create comment
+            const comment = await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: commentBody
             });
+
+            // Upload artifacts
+            const artifacts = [
+              { name: 'terraform-plan-full.txt', path: '/opt/terraform-plan-full.txt' },
+              { name: 'terraform-plan-summary.txt', path: '/opt/terraform-plan-summary.txt' },
+              { name: 'infracost-breakdown.txt', path: '/opt/infracost-breakdown.txt' },
+              { name: 'infracost-breakdown.json', path: '/opt/infracost-breakdown.json' }
+            ];
+
+            const { uploadArtifact } = require('@actions/artifact');
+            const artifactClient = uploadArtifact();
+
+            for (const artifact of artifacts) {
+              try {
+                await artifactClient.uploadArtifact(
+                  artifact.name, 
+                  [artifact.path], 
+                  './', 
+                  { 
+                    compressionLevel: 9,
+                    retentionDays: 1 
+                  }
+                );
+              } catch (error) {
+                console.error(`Failed to upload artifact ${artifact.name}:`, error);
+              }
+            }
+
+      # - name: Prepare Workflow Summary
+      #   uses: actions/github-script@v6
+      #   if: github.event_name == 'pull_request'
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     script: |
+      #       const fs = require('fs');
+            
+      #       // Read files
+      #       const planOutput = fs.readFileSync('/opt/terraform-plan-output.txt', 'utf8');
+      #       const infracostBreakdown = fs.readFileSync('/opt/infracost-breakdown.txt', 'utf8');
+            
+      #       // Truncate long outputs
+      #       const truncatedPlan = planOutput.length > 3000 
+      #         ? `${planOutput.slice(0, 3000)}...\n(Plan output truncated)` 
+      #         : planOutput;
+            
+      #       const truncatedInfracost = infracostBreakdown.length > 3000
+      #         ? `${infracostBreakdown.slice(0, 3000)}...\n(Cost breakdown truncated)`
+      #         : infracostBreakdown;
+            
+      #       const commentBody = `### 🔍 Workflow Analysis
+
+      #       #### Terraform Plan Insights
+      #       \`\`\`
+      #       ${truncatedPlan}
+      #       \`\`\`
+
+      #       #### Cost Estimation Overview
+      #       \`\`\`
+      #       ${truncatedInfracost}
+      #       \`\`\`
+
+      #       *Workflow Executed by @${{ github.actor }}*`;
+            
+      #       github.rest.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: commentBody
+      #       });
