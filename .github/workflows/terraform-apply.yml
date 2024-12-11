@@ -33,39 +33,40 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true  # Ensure the PR was merged
 
-  steps:
-      - name: Checkout PR Branch
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
-
-      - name: Set Terraform Variables
-        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
-
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Validate Terraform Formatting
-        run: terraform fmt -check
-        working-directory: terraform
-
-      - name: Initialize Terraform Configuration
-        run: terraform init
-        working-directory: terraform
-      
-      - name: Terraform Apply
-        run: terraform apply --auto-approve
-        working-directory: terraform
-
-      - name: Trigger Ansible Monitoring Workflow
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          event-type: ansible-monitoring
-      
-
-
-      
-      
-
-
-
+    steps:
+        - name: Checkout PR Branch
+          uses: actions/checkout@v3
+          with:
+            ref: ${{ github.head_ref }}
+  
+        - name: Set Terraform Variables
+          run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+  
+        - name: Install Terraform
+          uses: hashicorp/setup-terraform@v2
+  
+        - name: Validate Terraform Formatting
+          run: terraform fmt -check
+          working-directory: terraform
+  
+        - name: Initialize Terraform Configuration
+          run: terraform init
+          working-directory: terraform
+        
+        - name: Terraform Apply
+          run: terraform apply --auto-approve
+          working-directory: terraform
+  
+        - name: Trigger Ansible Monitoring Workflow
+          uses: peter-evans/repository-dispatch@v2
+          with:
+            event-type: ansible-monitoring
+        
+  
+  
+        
+        
+  
+  
+  
+  
