@@ -39,6 +39,11 @@ jobs:
           with:
             ref: ${{ github.head_ref }}
 
+        - name: Debug Branch Information
+          run: |
+            echo "Base branch: ${{ github.base_ref }}"
+            echo "Head branch: ${{ github.head_ref }}"
+  
         - name: Set Terraform Variables
           run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
 
