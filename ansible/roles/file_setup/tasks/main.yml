@@ -35,33 +35,6 @@
         chdir: "{{ app_dir }}"
   when: data_folder.stat.exists
 
-- name: Ensure app directories exist for backend and frontend
-  file:
-    path: "{{ app_dir }}/{{ item }}"
-    state: directory
-    mode: '0755'
-  with_items:
-    - backend
-    - frontend
-
-- name: Configure backend .env file using template
-  template:
-    src: "backend_env_template.j2"
-    dest: "{{ app_dir }}/backend/.env"
-    mode: '0644'
-
-- name: Configure frontend .env file using template
-  template:
-    src: "frontend_env_template.j2"
-    dest: "{{ app_dir }}/frontend/.env"
-    mode: '0644'
-
-- name: Configure application compose file using template
-  template:
-    src: "docker_compose_template.j2"
-    dest: "{{ app_dir }}/docker-compose.yml"
-    mode: '0644'
-
 - name: Configure monitoring compose file using template
   template:
     src: "monitoring_stack_template.j2"
