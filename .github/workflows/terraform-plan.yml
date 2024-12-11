@@ -111,10 +111,10 @@ jobs:
             const planContent = fs.readFileSync('/tmp/plan_output.txt', 'utf8');
             const costSummary = fs.readFileSync('/tmp/cost_summary.txt', 'utf8');
             
-            const commentBody = `### 🔍 Infrastructure Validation Report
+            const commentBody = `### 🔍 Infrastructure Plan and Cost Report
 
             <details>
-            <summary>**📋 Comprehensive Terraform Execution Plan**</summary>
+            <summary>**Comprehensive Terraform Execution Plan 📋 **</summary>
 
             \`\`\`terraform
             ${planContent}
@@ -122,7 +122,7 @@ jobs:
             </details>
 
             <details>
-            <summary>**💰 Detailed Resource Cost Projection**</summary>
+            <summary>**Detailed Resource Cost Projection 💰 **</summary>
 
             \`\`\`
             ${costSummary}
