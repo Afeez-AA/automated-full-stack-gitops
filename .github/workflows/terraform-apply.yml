@@ -81,7 +81,7 @@ jobs:
           name: infrastructure-artifacts
           path: |
             ansible/inventory.ini
-            ${{ vars.PRIVATE_KEY_PATH }}
+            terraform/${{ vars.KEY_PAIR_NAME }}
           retention-days: 1
 
       # Trigger Ansible Monitoring Workflow
