@@ -113,7 +113,7 @@ jobs:
             const commentBody = `### 🔍 Infrastructure Validation Report
 
             <details>
-            <summary>**📋 Terraform Plan Insights **</summary>
+            <summary>📋 Terraform Plan Insights 📋</summary>
 
             \`\`\`terraform
             ${planContent}
@@ -121,7 +121,7 @@ jobs:
             </details>
 
             <details>
-            <summary>**💰 Cost Estimation Overview 💰**</summary>
+            <summary>💰 Cost Estimation Overview 💰</summary>
 
             \`\`\`
             ${costSummary}

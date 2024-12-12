@@ -1,11 +1,21 @@
 name: Terraform Infrastructure Apply
 on:
-  workflow_dispatch: # Allows manual trigger
   pull_request:
     branches:
       - 'infra_main'  
     types:
-      - closed  # Trigger when the PR is closed (merged or not)
+      - closed  
+
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        description: Select Terraform Action
+        options:
+        - apply
+        - destroy
+        required: true
+
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -30,37 +40,47 @@ jobs:
   terraform-apply:
     name: Terraform Infrastructure Apply
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true  # Ensure the PR was merged
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
     steps:
-        - name: Checkout PR Branch
-          uses: actions/checkout@v3
-          with:
-            ref: ${{ github.head_ref }}
+      - name: Checkout PR Branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
 
-        - name: Debug Branch Information
-          run: |
-            echo "Base branch: ${{ github.base_ref }}"
-            echo "Head branch: ${{ github.head_ref }}"
-  
-        - name: Set Terraform Variables
-          run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: Set Terraform Variables
+        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+      
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Initialize Terraform Configuration
+        run: terraform init
+        working-directory: terraform
         
-        - name: Install Terraform
-          uses: hashicorp/setup-terraform@v2
+      - name: Terraform Apply
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        run: terraform apply --auto-approve -lock=false
+        working-directory: terraform
+        
+      - name: Terraform Destroy
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        run: terraform destroy --auto-approve -lock=false
+        working-directory: terraform
+        
+      # Upload inventory and key as artifacts
+      - name: Upload Inventory and Key
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-artifacts
+          path: |
+            ../ansible/inventory.ini
+            ${{ vars.PRIVATE_KEY_PATH }}
+          retention-days: 1
 
-        - name: Validate Terraform Formatting
-          run: terraform fmt -check
-          working-directory: terraform
-
-        - name: Initialize Terraform Configuration
-          run: terraform init
-          working-directory: terraform
-          
-        - name: Terraform Apply
-          run: terraform apply --auto-approve -lock=false
-          working-directory: terraform
-          
-        - name: Trigger Ansible Monitoring Workflow
-          uses: peter-evans/repository-dispatch@v2
-          with:
-            event-type: ansible-monitoring
+      # Trigger Ansible Monitoring Workflow
+      - name: Trigger Ansible Monitoring Workflow
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: ansible-monitoring

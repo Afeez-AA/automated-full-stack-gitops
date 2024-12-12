@@ -1,4 +1,4 @@
-name: Monitoring stack deployment
+name: Monitoring Stack Deployment
 
 on:
   repository_dispatch:
@@ -7,18 +7,27 @@ on:
 
 jobs:
   ansible-monitoring:
-    name: Monitoring stack deployment
+    name: Monitoring Stack Deployment
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout PR Branch
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Set Terraform Variables
-        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
-      
+      # Download artifacts from Terraform apply job
+      - name: Download Infrastructure Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: infrastructure-artifacts
+          path: ./artifacts
+
+      # Set up SSH key from artifacts with consistent naming
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          cp ./artifacts/$(basename ${{ vars.PRIVATE_KEY_PATH }}) ~/.ssh/${{ vars.KEY_PAIR_NAME }}.pem
+          chmod 600 ~/.ssh/${{ vars.KEY_PAIR_NAME }}.pem
+
       - name: Set up Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
         with:
@@ -26,9 +35,10 @@ jobs:
       
       - name: Run Ansible Playbook
         run: |
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini ./ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/inventory.ini ./ansible/playbook.yml \
               --extra-vars "frontend_domain=${{ vars.FRONTEND_DOMAIN }} \
                 traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
                 cert_email=${{ vars.CERT_EMAIL }}\
                 repo=${{ vars.TF_VAR_repo }}\
-                app_dir=${{ vars.APP_DIR}}
+                app_dir=${{ vars.APP_DIR }} \
+                ansible_ssh_private_key_file=~/.ssh/${{ vars.KEY_PAIR_NAME }}.pem"
