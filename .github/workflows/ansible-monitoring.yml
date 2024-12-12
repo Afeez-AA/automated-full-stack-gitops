@@ -1,0 +1,34 @@
+name: Monitoring stack deployment
+
+on:
+  repository_dispatch:
+    types:
+      - ansible-monitoring
+
+jobs:
+  ansible-monitoring:
+    name: Monitoring stack deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set Terraform Variables
+        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+      
+      - name: Set up Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "9.3.0"
+      
+      - name: Run Ansible Playbook
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini ./ansible/playbook.yml \
+              --extra-vars "frontend_domain=${{ vars.FRONTEND_DOMAIN }} \
+                traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
+                cert_email=${{ vars.CERT_EMAIL }}\
+                repo=${{ vars.TF_VAR_repo }}\
+                app_dir=${{ vars.APP_DIR}}
