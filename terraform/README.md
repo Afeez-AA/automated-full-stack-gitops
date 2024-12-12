@@ -16,3 +16,4 @@ infra-provisioing-now-works-trigger 12
 15-lucky number
 test-16
 test-17
+final-ft-18
