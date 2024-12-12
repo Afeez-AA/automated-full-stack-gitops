@@ -4,6 +4,7 @@
     repo: "{{ repo }}"
     dest: "{{ app_dir }}"
     version: "{{ branch }}"
+    
 
 - name: Ensure the Traefik directory exists
   file:
