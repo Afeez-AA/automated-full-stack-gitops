@@ -32,8 +32,13 @@ jobs:
       # Copy the key to the terraform directory
       - name: Setup SSH Key
         run: |
-            cp ./artifacts/${{ vars.KEY_PAIR_NAME }} ./terraform/
+            cp ./artifacts/terraform/${{ vars.KEY_PAIR_NAME }} ./terraform/
             chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
+
+      - name: Update Inventory File
+        run: |
+          sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./terraform/${{ vars.KEY_PAIR_NAME }}|" ./artifacts/ansible/inventory.ini
+          cat ./artifacts/ansible/inventory.ini  # Debug print
 
       - name: Set up Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
