@@ -51,6 +51,6 @@ jobs:
               --extra-vars "domain_name=${{ vars.DOMAIN_NAME }} \
                 traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
                 cert_email=${{ vars.CERT_EMAIL }}\
-                repo=${{ vars.TF_VAR_repo }}\
+                repo=${{ vars.REPO }}\
                 app_dir=${{ vars.APP_DIR }}\
                 branch=${{ github.ref_name }}"
