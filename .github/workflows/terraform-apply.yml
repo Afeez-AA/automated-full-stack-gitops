@@ -36,6 +36,7 @@ env:
   TF_VAR_cert_email: ${{ vars.CERT_EMAIL }}
   TF_VAR_private_key_path: ${{ vars.PRIVATE_KEY_PATH }}
   TF_VAR_app_dir: ${{ vars.APP_DIR }}
+  TF_VAR_repo: ${{ vars.REPO }}
 
 jobs:
   terraform-apply:
@@ -55,9 +56,6 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Set Terraform Variables
-        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
-      
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
