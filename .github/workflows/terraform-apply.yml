@@ -12,7 +12,6 @@ on:
         type: choice
         description: Select Terraform Action
         options:
-        - apply
         - destroy
         required: true
 
@@ -40,7 +39,14 @@ jobs:
   terraform-apply:
     name: Terraform Infrastructure Apply
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+
+    # Trigger on merged PR to infra_main or manual destroy
+    if: >
+      (github.event_name == 'pull_request' && 
+       github.event.pull_request.merged == true && 
+       github.base_ref == 'infra_main') ||
+      (github.event_name == 'workflow_dispatch' && 
+       github.event.inputs.action == 'destroy')
     
     steps:
       - name: Checkout PR Branch
@@ -59,28 +65,28 @@ jobs:
         working-directory: terraform
         
       - name: Terraform Apply
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
         run: terraform apply --auto-approve -lock=false
         working-directory: terraform
-        
+
       - name: Terraform Destroy
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
         run: terraform destroy --auto-approve -lock=false
         working-directory: terraform
-        
+
       # Upload inventory and key as artifacts
       - name: Upload Inventory and Key
         uses: actions/upload-artifact@v4
         with:
           name: infrastructure-artifacts
           path: |
-            ../ansible/inventory.ini
+            ansible/inventory.ini
             ${{ vars.PRIVATE_KEY_PATH }}
           retention-days: 1
 
       # Trigger Ansible Monitoring Workflow
       - name: Trigger Ansible Monitoring Workflow
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
         uses: peter-evans/repository-dispatch@v3
         with:
           event-type: ansible-monitoring
