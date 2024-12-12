@@ -24,11 +24,16 @@ jobs:
           name: infrastructure-artifacts
           path: ./artifacts
 
+      - name: Debug Artifacts
+        run: |
+          echo "Listing artifacts directory:"
+          ls -la ./artifacts/
+
       # Copy the key to the terraform directory
       - name: Setup SSH Key
         run: |
-          cp ./artifacts/$(basename ${{ vars.PRIVATE_KEY_PATH }}) ./terraform/$(basename ${{ vars.PRIVATE_KEY_PATH }}.pem | sed 's#^\./##')
-          chmod 600 ./terraform/$(basename ${{ vars.PRIVATE_KEY_PATH }}.pem | sed 's#^\./##')
+            cp ./artifacts/${{ vars.KEY_PAIR_NAME }} ./terraform/
+            chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
 
       - name: Set up Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
