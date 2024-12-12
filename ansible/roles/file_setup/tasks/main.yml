@@ -3,7 +3,7 @@
   git:
     repo: "{{ repo }}"
     dest: "{{ app_dir }}"
-    version: main
+    version: "{{ branch | default('main') }}"  # Uses 'main' if branch not specified
 
 - name: Ensure the Traefik directory exists
   file:

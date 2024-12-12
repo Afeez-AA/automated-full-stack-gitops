@@ -52,4 +52,5 @@ jobs:
                 traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
                 cert_email=${{ vars.CERT_EMAIL }}\
                 repo=${{ vars.TF_VAR_repo }}\
-                app_dir=${{ vars.APP_DIR }}"
+                app_dir=${{ vars.APP_DIR }}\
+                branch=${{ github.ref_name }}"
