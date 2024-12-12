@@ -47,7 +47,7 @@ jobs:
       
       - name: Run Ansible Playbook
         run: |
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/inventory.ini ./ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/ansible/inventory.ini ./ansible/playbook.yml \
               --extra-vars "domain_name=${{ vars.DOMAIN_NAME }} \
                 traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
                 cert_email=${{ vars.CERT_EMAIL }}\
