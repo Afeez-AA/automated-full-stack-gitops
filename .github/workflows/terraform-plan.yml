@@ -8,7 +8,6 @@ on:
       - opened
       - synchronize
       - reopened
-
 permissions:
   pull-requests: write
 
@@ -16,8 +15,8 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
-  
-    # Terraform Variables to be passed as environment variables
+  # ... (other existing environment variables)
+
   TF_VAR_ami_id: ${{ vars.AMI_ID }}
   TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
   TF_VAR_key_pair_name: ${{ vars.KEY_PAIR_NAME }}
@@ -42,7 +41,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
-          
+
       - name: Checkout Base Branch
         uses: actions/checkout@v3
         with:
@@ -53,17 +52,14 @@ jobs:
         run: |
           echo "Base branch: ${{ github.base_ref }}"
           echo "Head branch: ${{ github.head_ref }}"
-      
-      - name: Set Terraform Variables
-        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
-      
+
       - name: Prepare Terraform
         uses: hashicorp/setup-terraform@v2
 
       - name: Validate Terraform Formatting
         run: terraform fmt -check
-        
         working-directory: terraform
+
       - name: Initialize Terraform Configuration
         run: terraform init
         working-directory: terraform
@@ -99,7 +95,7 @@ jobs:
             --compare-to=/tmp/base_cost_analysis.json \
             --format=json > /tmp/cost_difference.json || true
         continue-on-error: true
-        
+
       - name: Prepare Workflow Report
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -111,19 +107,24 @@ jobs:
             const planContent = fs.readFileSync('/tmp/plan_output.txt', 'utf8');
             const costSummary = fs.readFileSync('/tmp/cost_summary.txt', 'utf8');
             
-            const commentBody = `### 🔍 Infrastructure Plan and Cost Report
+            const commentBody = `### 🔍 Infrastructure Validation Report
+
             <details>
-            <summary>Terraform Plan Insights 📋</summary>
+            <summary>**📋 Terraform Plan Insights **</summary>
+
             \`\`\`terraform
             ${planContent}
             \`\`\`
             </details>
+
             <details>
-            <summary>Cost Estimation Overview 💰</summary>
+            <summary>**💰 Cost Estimation Overview 💰**</summary>
+
             \`\`\`
             ${costSummary}
             \`\`\`
             </details>
+
             *Analysis triggered by @${{ github.actor }}*`;
             
             github.rest.issues.createComment({
