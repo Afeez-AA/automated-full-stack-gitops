@@ -20,7 +20,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   TF_VAR_aws_region: ${{ vars.AWS_REGION }}
   
-    # Terraform Variables to be passed as environment variables
+# Terraform Variables to be passed as environment variables
   TF_VAR_ami_id: ${{ vars.AMI_ID }}
   TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
   TF_VAR_key_pair_name: ${{ vars.KEY_PAIR_NAME }}
@@ -84,9 +84,9 @@ jobs:
             terraform/${{ vars.KEY_PAIR_NAME }}
           retention-days: 1
 
-      # Trigger Ansible Monitoring Workflow
       - name: Trigger Ansible Monitoring Workflow
         if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
         uses: peter-evans/repository-dispatch@v3
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           event-type: ansible-monitoring

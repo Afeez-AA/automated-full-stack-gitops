@@ -1,12 +1,14 @@
 name: Monitoring Stack Deployment
 
 on:
-  repository_dispatch:
+  workflow_run:
+    workflows: ["Terraform Infrastructure Apply"]
     types:
-      - ansible-monitoring
+      - completed
 
 jobs:
   ansible-monitoring:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Monitoring Stack Deployment
     runs-on: ubuntu-latest
     
@@ -14,17 +16,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Download artifacts from Terraform apply job
-      - name: Download Infrastructure Artifacts
-        uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: terraform-apply.yml
+          workflow_conclusion: success
           name: infrastructure-artifacts
           path: ./artifacts
 
       # Copy the key to the terraform directory
       - name: Setup SSH Key
         run: |
-          cp ./artifacts/$(basename ${{ vars.PRIVATE_KEY_PATH }}.pem) ./terraform/$(basename ${{ vars.PRIVATE_KEY_PATH }}.pem | sed 's#^\./##')
+          cp ./artifacts/$(basename ${{ vars.PRIVATE_KEY_PATH }}) ./terraform/$(basename ${{ vars.PRIVATE_KEY_PATH }}.pem | sed 's#^\./##')
           chmod 600 ./terraform/$(basename ${{ vars.PRIVATE_KEY_PATH }}.pem | sed 's#^\./##')
 
       - name: Set up Ansible
@@ -35,7 +38,7 @@ jobs:
       - name: Run Ansible Playbook
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/inventory.ini ./ansible/playbook.yml \
-              --extra-vars "frontend_domain=${{ vars.FRONTEND_DOMAIN }} \
+              --extra-vars "domain_name=${{ vars.DOMAIN_NAME }} \
                 traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
                 cert_email=${{ vars.CERT_EMAIL }}\
                 repo=${{ vars.TF_VAR_repo }}\
