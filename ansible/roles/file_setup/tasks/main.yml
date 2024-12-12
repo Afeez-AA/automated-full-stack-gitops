@@ -3,8 +3,9 @@
   git:
     repo: "{{ repo }}"
     dest: "{{ app_dir }}"
-    version: "{{ branch }}"  
+    version: "{{ branch }}"
     
+
 - name: Ensure the Traefik directory exists
   file:
     path: "{{ app_dir }}/traefik"
