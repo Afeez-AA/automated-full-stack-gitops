@@ -1,0 +1,82 @@
+name: Monitoring Stack Deployment
+
+on:
+  workflow_run:
+    workflows: ["Terraform Infrastructure Apply"]
+    types:
+      - completed
+
+jobs:
+  ansible-monitoring:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Monitoring Stack Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: terraform-apply.yml
+          workflow_conclusion: success
+          name: infrastructure-artifacts
+          path: ./artifacts
+      
+      - name: Debug Workflow Information
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow run head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Workflow run head sha: ${{ github.event.workflow_run.head_sha }}"
+          echo "Base branch: ${{ github.event.workflow_run.head_repository.default_branch }}"
+          echo "Event workflow reference: ${{ github.event.workflow.reference }}"
+          
+      # - name: Get Source Branch
+      #   run: |
+      #     echo "SOURCE_BRANCH=infra_main" >> $GITHUB_ENV
+
+      - name: Debug Artifacts
+        run: |
+          echo "Listing artifacts directory:"
+          ls -la ./artifacts/
+
+      # Copy the key to the terraform directory
+      - name: Setup SSH Key
+        run: |
+            cp ./artifacts/terraform/${{ vars.KEY_PAIR_NAME }} ./terraform/
+            chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
+
+      - name: Update Inventory File
+        run: |
+          sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./terraform/${{ vars.KEY_PAIR_NAME }}|" ./artifacts/ansible/inventory.ini
+          cat ./artifacts/ansible/inventory.ini  # Debug print
+
+      - name: Set up Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "9.3.0"
+
+      - name: Debug Branch Information Before Ansible
+        run: |
+          echo "Current directory structure:"
+          pwd
+          ls -la
+          echo "Current branch in workflow:"
+          git branch --show-current
+          echo "Contents of ansible directory:"
+          ls -la ./ansible
+          echo "Contents of playbook.yml:"
+          cat ./ansible/playbook.yml
+          echo "Git status:"
+          git status
+      
+      - name: Run Ansible Playbook
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/ansible/inventory.ini ./ansible/playbook.yml \
+              --extra-vars "domain_name=${{ vars.DOMAIN_NAME }} \
+                traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
+                cert_email=${{ vars.CERT_EMAIL }}\
+                repo=${{ vars.REPO }}\
+                app_dir=${{ vars.APP_DIR }}\
+                branch=infra_main"
