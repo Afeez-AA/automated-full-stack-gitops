@@ -65,4 +65,4 @@ jobs:
                 cert_email=${{ vars.CERT_EMAIL }}\
                 repo=${{ vars.REPO }}\
                 app_dir=${{ vars.APP_DIR }}\
-                branch=${{ env.SOURCE_BRANCH }}"
+                branch=infra_main"
