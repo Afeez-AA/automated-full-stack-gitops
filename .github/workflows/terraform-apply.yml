@@ -88,12 +88,3 @@ jobs:
             ansible/inventory.ini
             terraform/${{ vars.KEY_PAIR_NAME }}
           retention-days: 1
-
-      - name: Trigger Ansible Monitoring Workflow
-        if: |
-          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || 
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          event-type: ansible-monitoring
