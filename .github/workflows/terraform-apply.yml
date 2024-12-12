@@ -95,5 +95,5 @@ jobs:
           (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           event-type: ansible-monitoring
