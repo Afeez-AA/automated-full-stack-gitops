@@ -32,9 +32,9 @@ jobs:
           echo "Base branch: ${{ github.event.workflow_run.head_repository.default_branch }}"
           echo "Event workflow reference: ${{ github.event.workflow.reference }}"
           
-      - name: Get Source Branch
-        run: |
-          echo "SOURCE_BRANCH=infra_main" >> $GITHUB_ENV
+      # - name: Get Source Branch
+      #   run: |
+      #     echo "SOURCE_BRANCH=infra_main" >> $GITHUB_ENV
 
       - name: Debug Artifacts
         run: |
@@ -56,6 +56,20 @@ jobs:
         uses: alex-oleshkevich/setup-ansible@v1.0.1
         with:
           version: "9.3.0"
+
+      - name: Debug Branch Information Before Ansible
+        run: |
+          echo "Current directory structure:"
+          pwd
+          ls -la
+          echo "Current branch in workflow:"
+          git branch --show-current
+          echo "Contents of ansible directory:"
+          ls -la ./ansible
+          echo "Contents of playbook.yml:"
+          cat ./ansible/playbook.yml
+          echo "Git status:"
+          git status
       
       - name: Run Ansible Playbook
         run: |
