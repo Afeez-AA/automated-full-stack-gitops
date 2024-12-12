@@ -1,4 +1,114 @@
-name: Infrastructure Validation Workflow
+name: Ansible Monitoring
+
+on:
+  repository_dispatch:
+    types:
+      - ansible-monitoring
+
+jobs:
+  ansible-monitoring:
+    name: Monitoring stack deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set Terraform Variables
+        run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Set up Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "9.3.0"
+
+      - name: Run Ansible Playbook
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini ./ansible/playbook.yml \
+              --extra-vars "frontend_domain=${{ vars.FRONTEND_DOMAIN }} \
+                traefik_domain=${{ vars.TRAEFIK_DOMAIN }} \
+                cert_email=${{ vars.CERT_EMAIL }}\
+                repo=${{ vars.TF_VAR_repo }}\
+                app_dir=${{ vars.APP_DIR}}
+
+
+
+
+
+
+
+
+
+
+
+name: Terraform Apply
+
+on:
+  pull_request:
+    branches:
+      - 'infra_main'  
+    types:
+      - closed  # Trigger when the PR is closed (merged or not)
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+  
+    # Terraform Variables to be passed as environment variables
+  TF_VAR_ami_id: ${{ vars.AMI_ID }}
+  TF_VAR_instance_type: ${{ vars.INSTANCE_TYPE }}
+  TF_VAR_key_pair_name: ${{ vars.KEY_PAIR_NAME }}
+  TF_VAR_instance_name: ${{ vars.INSTANCE_NAME }}
+  TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+  TF_VAR_frontend_domain: ${{ vars.FRONTEND_DOMAIN }}
+  TF_VAR_db_domain: ${{ vars.DB_DOMAIN }}
+  TF_VAR_traefik_domain: ${{ vars.TRAEFIK_DOMAIN }}
+  TF_VAR_grafana_domain: ${{ vars.GRAFANA_DOMAIN }}
+  TF_VAR_prometheus_domain: ${{ vars.PROMETHEUS_DOMAIN }}
+  TF_VAR_cert_email: ${{ vars.CERT_EMAIL }}
+  TF_VAR_private_key_path: ${{ vars.PRIVATE_KEY_PATH }}
+  TF_VAR_app_dir: ${{ vars.APP_DIR }}
+
+jobs:
+  terraform-apply:
+    name: Terraform Plan and Cost Estimation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true  # Ensure the PR was merged
+
+    steps:
+        - name: Checkout PR Branch
+          uses: actions/checkout@v3
+          with:
+            ref: ${{ github.head_ref }}
+  
+        - name: Set Terraform Variables
+          run: echo "TF_VAR_repo=https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}" >> $GITHUB_ENV
+  
+        - name: Install Terraform
+          uses: hashicorp/setup-terraform@v2
+  
+        - name: Validate Terraform Formatting
+          run: terraform fmt -check
+          working-directory: terraform
+  
+        - name: Initialize Terraform Configuration
+          run: terraform init
+          working-directory: terraform
+        
+        - name: Terraform Apply
+          run: terraform apply --auto-approve
+          working-directory: terraform
+  
+        - name: Trigger Ansible Monitoring Workflow
+          uses: peter-evans/repository-dispatch@v2
+          with:
+            event-type: ansible-monitoring
+        
+  
+  name: Infrastructure Validation Workflow
 
 on:
   workflow_dispatch:
@@ -137,3 +247,9 @@ jobs:
               repo: context.repo.repo,
               body: commentBody
             });
+        
+        
+  
+  
+  
+  

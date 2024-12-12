@@ -1,13 +1,3 @@
-output "frontend_domain" {
-  value       = var.frontend_domain
-  description = "The domain for the frontend"
-}
-
-output "db_domain" {
-  value       = var.db_domain
-  description = "The domain for the database"
-}
-
 output "traefik_domain" {
   value       = var.traefik_domain
   description = "The domain for the Traefik service"
