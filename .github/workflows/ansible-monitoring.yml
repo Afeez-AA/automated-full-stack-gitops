@@ -23,15 +23,23 @@ jobs:
           workflow_conclusion: success
           name: infrastructure-artifacts
           path: ./artifacts
+      
+      - name: Debug Workflow Information
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow run head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Workflow run head sha: ${{ github.event.workflow_run.head_sha }}"
+          echo "Base branch: ${{ github.event.workflow_run.head_repository.default_branch }}"
+          echo "Event workflow reference: ${{ github.event.workflow.reference }}"
+          
+      - name: Get Source Branch
+        run: |
+          echo "SOURCE_BRANCH=infra_main" >> $GITHUB_ENV
 
       - name: Debug Artifacts
         run: |
           echo "Listing artifacts directory:"
           ls -la ./artifacts/
-
-      - name: Get Source Branch
-        run: |
-          echo "SOURCE_BRANCH=$(echo '${{ toJSON(github.event.workflow_run.head_branch) }}')" >> $GITHUB_ENV
 
       # Copy the key to the terraform directory
       - name: Setup SSH Key
