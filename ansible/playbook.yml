@@ -7,7 +7,7 @@
         repo: "{{ repo }}"
         dest: "{{ app_dir }}"
         version: "{{ branch }}"
-        update: yes  # This ensures it pulls latest changes
+        update: yes  
 
     - name: Create backend .env file
       copy:
