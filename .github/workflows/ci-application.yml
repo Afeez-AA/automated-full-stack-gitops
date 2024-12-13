@@ -1,6 +1,7 @@
 name: Application CI Pipeline
 
 on:
+
   push:
     branches:
       - 'integration'
@@ -48,10 +49,36 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.IMAGE_TAG }}
             ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
 
+      - name: Debug Docker Images
+        run: |
+          echo "=== Docker Images ==="
+          sudo docker images
+
+
       - name: Update docker-compose.yml
         run: |
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.IMAGE_TAG }}|" docker-compose.yml
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          echo "=== Current docker-compose.yml content ==="
+          cat docker-compose.yml
+          
+          echo -e "\n=== Attempting to update image tags ==="
+          # Update backend image
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          # Update frontend image
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          
+          echo -e "\n=== Updated docker-compose.yml content ==="
+          cat docker-compose.yml
+          
+          # Check if any changes were made
+          if git diff --quiet docker-compose.yml; then
+            echo "No changes were made to docker-compose.yml"
+            echo "Current content of docker-compose.yml:"
+            cat docker-compose.yml
+            exit 1
+          else
+            echo "Changes detected in docker-compose.yml:"
+            git diff docker-compose.yml
+          fi
 
       # Using GitHub's default token for authentication
       - name: Commit and push updated docker-compose
