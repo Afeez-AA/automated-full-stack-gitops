@@ -37,8 +37,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.IMAGE_TAG }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojo-devops:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojo-devops:latest
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
@@ -46,8 +46,8 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.IMAGE_TAG }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojo-devops:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojo-devops:latest
 
       - name: Debug Docker Images
         run: |
@@ -62,9 +62,9 @@ jobs:
           
           echo -e "\n=== Attempting to update image tags ==="
           # Update backend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojo-devops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
           # Update frontend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojo-devops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
           
           echo -e "\n=== Updated docker-compose.yml content ==="
           cat docker-compose.yml
