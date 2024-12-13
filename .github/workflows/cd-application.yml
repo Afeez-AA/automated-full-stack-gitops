@@ -50,5 +50,6 @@ jobs:
               "backend_env": ${{ toJSON(secrets.BACKEND_ENV) }},
               "frontend_env": ${{ toJSON(secrets.FRONTEND_ENV) }},
               "frontend_domain": "${{ vars.FRONTEND_DOMAIN }}",
-              "db_domain": "${{ vars.DB_DOMAIN }}"
+              "db_domain": "${{ vars.DB_DOMAIN }}",
+              "branch": "deployment"
             }'
