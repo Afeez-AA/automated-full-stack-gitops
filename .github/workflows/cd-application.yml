@@ -44,10 +44,11 @@ jobs:
       - name: Run Application Deployment Playbook
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/ansible/inventory.ini ./ansible/playbook.yml \
-            --extra-vars "repo=${{ vars.REPO }}\
-                         branch=deployment \
-                         app_dir=${{ vars.APP_DIR }} \
-                         backend_env='${{ secrets.BACKEND_ENV }}' \
-                         frontend_env='${{ secrets.FRONTEND_ENV }}'\
-                         frontend_domain=${{ vars.FRONTEND_DOMAIN }}\
-                         db_domain=${{ vars.DB_DOMAIN }}"
+            --extra-vars '{
+              "repo": "${{ vars.REPO }}",
+              "app_dir": "${{ vars.APP_DIR }}",
+              "backend_env": ${{ toJSON(secrets.BACKEND_ENV) }},
+              "frontend_env": ${{ toJSON(secrets.FRONTEND_ENV) }},
+              "frontend_domain": "${{ vars.FRONTEND_DOMAIN }}",
+              "db_domain": "${{ vars.DB_DOMAIN }}"
+            }'
