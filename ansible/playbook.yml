@@ -25,4 +25,4 @@
     - name: Bring up the application stack
       command: docker compose up -d
       args:
-        chdir: "{{ app_dir }}
+        chdir: "{{ app_dir }}"
