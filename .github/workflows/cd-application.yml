@@ -17,26 +17,25 @@ jobs:
         with:
           ref: deployment
 
-      # Get artifacts from terraform workflow
-      - name: Download Infrastructure Artifacts
+      - name: Download artifacts
         uses: dawidd6/action-download-artifact@v3
         with:
           workflow: terraform-apply.yml
           name: infrastructure-artifacts
           path: ./artifacts
           workflow_conclusion: success
-          branch: infra_main
+          branch: infra_main 
 
       - name: Setup SSH Key
         run: |
-          mkdir -p ./terraform
-          cp ./artifacts/terraform/${{ vars.KEY_PAIR_NAME }} ./terraform/
-          chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
-      
+            mkdir ./terraform/
+            cp ./artifacts/terraform/${{ vars.KEY_PAIR_NAME }} ./terraform/
+            chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
+
       - name: Update Inventory File
         run: |
           sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./terraform/${{ vars.KEY_PAIR_NAME }}|" ./artifacts/ansible/inventory.ini
-
+          
       - name: Set up Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
         with:
