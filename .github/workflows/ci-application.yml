@@ -1,0 +1,76 @@
+name: Application CI Pipeline
+
+on:
+  push:
+    branches:
+      - 'integration'
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+
+env:
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKER_HUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate timestamp tag
+        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.TIMESTAMP }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TIMESTAMP }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+
+      - name: Update docker-compose.yml
+        run: |
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.TIMESTAMP }}|" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TIMESTAMP }}|" docker-compose.yml
+
+      - name: Debug Docker Images and Compose File
+        run: |
+          echo "=== Docker Images ==="
+          docker images | grep "${{ secrets.DOCKERHUB_USERNAME }}"
+          
+          echo -e "\n=== Docker Compose File Content ==="
+          cat docker-compose.yml
+          
+          echo -e "\n=== Verifying image tags in docker-compose.yml ==="
+          grep "image:" docker-compose.yml
+
+      # Using GitHub's default token for authentication
+      - name: Commit and push updated docker-compose
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add docker-compose.yml
+          git commit -m "Update image tags to ${{ env.TIMESTAMP }} [skip ci]"
+          git push
