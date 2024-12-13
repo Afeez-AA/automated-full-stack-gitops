@@ -44,7 +44,4 @@ Add Poetry to your PATH (if not automatically added):
    Ensure you update the necessary configurations in the `.env` file, particularly the database configuration.
 
 
-Test-01
-Test-02
-Test-03
-Test-04
+
