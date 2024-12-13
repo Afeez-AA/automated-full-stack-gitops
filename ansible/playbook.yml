@@ -21,9 +21,8 @@
         dest: "{{ app_dir }}/frontend/.env"
         mode: '0600'
 
-    - name: Deploy application stack
-      docker_compose:
-        project_src: "{{ app_dir }}"
-        files:
-          - docker-compose.yml
-        state: present
+
+    - name: Bring up the application stack
+      command: docker compose up -d
+      args:
+        chdir: "{{ app_dir }}
