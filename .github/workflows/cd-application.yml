@@ -48,4 +48,4 @@ jobs:
                          backend_env='${{ secrets.BACKEND_ENV }}' \
                          frontend_env='${{ secrets.FRONTEND_ENV }}'\
                          frontend_domain=${{ vars.FRONTEND_DOMAIN }}\
-                         db_domain=${{ vars.DB_DOMAIN }}""
+                         db_domain=${{ vars.DB_DOMAIN }}"
