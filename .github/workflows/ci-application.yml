@@ -86,5 +86,5 @@ jobs:
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add docker-compose.yml
-          git commit -m "Update image tags to ${{ env.IMAGE_TAG }} [skip ci]"
+          git commit -m "Update image tags to ${{ env.IMAGE_TAG }}"
           git push
