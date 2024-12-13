@@ -1,0 +1,53 @@
+name: Application CD Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - 'deployment'
+    types:
+      - closed
+
+jobs:
+  application-deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: deployment
+
+      - name: Setup Infrastructure Files
+        run: |
+          # Create directories
+          mkdir -p ./tmp/ ./tmp/ansible
+          
+          # Decode and save SSH key
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ./tmp/${{ vars.KEY_PAIR_NAME }}
+          chmod 600 ./tmp/${{ vars.KEY_PAIR_NAME }}
+          
+          # Decode and save inventory
+          echo "${{ secrets.EC2_INVENTORY }}" | base64 -d > ./tmp/ansible/inventory.ini
+
+      - name: Update Inventory File
+        run: |
+          sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./tmp/${{ vars.KEY_PAIR_NAME }}|" ./tmp/ansible/inventory.ini
+          
+      - name: Set up Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "9.3.0"
+
+      - name: Run Application Deployment Playbook
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./tmp/ansible/inventory.ini ./ansible/playbook.yml \
+            --extra-vars '{
+              "repo": "${{ vars.REPO }}",
+              "app_dir": "${{ vars.APP_DIR }}",
+              "backend_env": ${{ toJSON(secrets.BACKEND_ENV) }},
+              "frontend_env": ${{ toJSON(secrets.FRONTEND_ENV) }},
+              "frontend_domain": "${{ vars.FRONTEND_DOMAIN }}",
+              "db_domain": "${{ vars.DB_DOMAIN }}",
+              "branch": "deployment"
+            }'
