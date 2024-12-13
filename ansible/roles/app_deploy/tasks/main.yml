@@ -1,0 +1,30 @@
+---
+- name: Checkout to deployment branch
+  git:
+    repo: "{{ repo }}"
+    dest: "{{ app_dir }}"
+    version: "{{ branch }}"
+    update: yes
+
+- name: Create backend .env file
+  copy:
+    content: "{{ backend_env }}"
+    dest: "{{ app_dir }}/backend/.env"
+    mode: '0600'
+
+- name: Create frontend .env file
+  copy:
+    content: "{{ frontend_env }}"
+    dest: "{{ app_dir }}/frontend/.env"
+    mode: '0600'
+
+- name: Copy docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ app_dir }}/docker-compose.yml"
+    mode: '0644'
+
+- name: Bring up the application stack
+  command: docker compose up -d
+  args:
+    chdir: "{{ app_dir }}"
