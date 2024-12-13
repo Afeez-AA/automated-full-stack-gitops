@@ -1,5 +1,5 @@
 ---
-- hosts: web_servers
+- hosts: all
   become: yes
   tasks:
     - name: Checkout to deployment branch
