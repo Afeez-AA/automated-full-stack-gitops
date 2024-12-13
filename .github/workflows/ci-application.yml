@@ -11,6 +11,7 @@ on:
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  IMAGE_TAG: 1.0.${{ github.run_number }}
 
 jobs:
   build-and-push:
@@ -29,16 +30,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Generate timestamp tag
-        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.TIMESTAMP }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.IMAGE_TAG }}
             ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
 
       - name: Build and push frontend
@@ -47,24 +45,13 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TIMESTAMP }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.IMAGE_TAG }}
             ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
 
       - name: Update docker-compose.yml
         run: |
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.TIMESTAMP }}|" docker-compose.yml
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.TIMESTAMP }}|" docker-compose.yml
-
-      - name: Debug Docker Images and Compose File
-        run: |
-          echo "=== Docker Images ==="
-          docker images | grep "${{ secrets.DOCKERHUB_USERNAME }}"
-          
-          echo -e "\n=== Docker Compose File Content ==="
-          cat docker-compose.yml
-          
-          echo -e "\n=== Verifying image tags in docker-compose.yml ==="
-          grep "image:" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ env.IMAGE_TAG }}|" docker-compose.yml
 
       # Using GitHub's default token for authentication
       - name: Commit and push updated docker-compose
@@ -72,5 +59,5 @@ jobs:
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add docker-compose.yml
-          git commit -m "Update image tags to ${{ env.TIMESTAMP }} [skip ci]"
+          git commit -m "Update image tags to ${{ env.IMAGE_TAG }} [skip ci]"
           git push
