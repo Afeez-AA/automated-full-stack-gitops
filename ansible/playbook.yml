@@ -1,10 +1,38 @@
 ---
-- name: Setting up application and monitoring servers
-  hosts: all
+- hosts: web_servers
   become: yes
-  roles:
-    - docker
-    - file_setup
-    - compose_setup
+  tasks:
+    - name: Checkout to deployment branch
+      git:
+        repo: "{{ repo }}"
+        dest: "{{ app_dir }}"
+        version: "{{ branch }}"
+        update: yes  
 
+    - name: Create env directories
+      file:
+        path: "{{ app_dir }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - backend
+        - frontend
 
+    - name: Create backend .env file
+      copy:
+        content: "{{ backend_env }}"
+        dest: "{{ app_dir }}/backend/.env"
+        mode: '0600'
+
+    - name: Create frontend .env file
+      copy:
+        content: "{{ frontend_env }}"
+        dest: "{{ app_dir }}/frontend/.env"
+        mode: '0600'
+
+    - name: Deploy application stack
+      docker_compose:
+        project_src: "{{ app_dir }}"
+        files:
+          - docker-compose.yml
+        state: present
