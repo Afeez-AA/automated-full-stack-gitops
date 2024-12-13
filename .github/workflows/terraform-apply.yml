@@ -86,3 +86,28 @@ jobs:
             ansible/inventory.ini
             terraform/${{ vars.KEY_PAIR_NAME }}
           retention-days: 1
+
+      - name: Save Infrastructure Details as Secrets
+        run: |
+          # First check if files exist
+          echo "Checking infrastructure files..."
+          if [ ! -f "terraform/${{ vars.KEY_PAIR_NAME }}" ] || [ ! -f "ansible/inventory.ini" ]; then
+            echo "Required files not found!"
+            exit 1
+          fi
+
+          echo "Reading infrastructure files..."
+          # Read files and encode in base64 to handle multiline content safely
+          SSH_KEY=$(cat "terraform/${{ vars.KEY_PAIR_NAME }}" | base64 -w 0)
+          INVENTORY=$(cat "ansible/inventory.ini" | base64 -w 0)
+          
+          echo "Saving to GitHub Secrets..."
+          # Save SSH key
+          gh secret set EC2_SSH_KEY --body "$SSH_KEY"
+          # Save inventory
+          gh secret set EC2_INVENTORY --body "$INVENTORY"
+          
+          echo "Infrastructure details saved as secrets successfully!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
