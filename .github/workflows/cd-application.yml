@@ -17,24 +17,21 @@ jobs:
         with:
           ref: deployment
 
-      - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v3
-        with:
-          workflow: terraform-apply.yml
-          name: infrastructure-artifacts
-          path: ./artifacts
-          workflow_conclusion: success
-          branch: infra_main 
-
-      - name: Setup SSH Key
+      - name: Setup Infrastructure Files
         run: |
-            mkdir ./terraform/
-            cp ./artifacts/terraform/${{ vars.KEY_PAIR_NAME }} ./terraform/
-            chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
+          # Create directories
+          mkdir -p ./tmp/ ./tmp/ansible
+          
+          # Decode and save SSH key
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ./tmp/${{ vars.KEY_PAIR_NAME }}
+          chmod 600 ./tmp/${{ vars.KEY_PAIR_NAME }}
+          
+          # Decode and save inventory
+          echo "${{ secrets.EC2_INVENTORY }}" | base64 -d > ./tmp/ansible/inventory.ini
 
       - name: Update Inventory File
         run: |
-          sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./terraform/${{ vars.KEY_PAIR_NAME }}|" ./artifacts/ansible/inventory.ini
+          sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./tmp/${{ vars.KEY_PAIR_NAME }}|" ./tmp/ansible/inventory.ini
           
       - name: Set up Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
@@ -43,7 +40,7 @@ jobs:
 
       - name: Run Application Deployment Playbook
         run: |
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/ansible/inventory.ini ./ansible/playbook.yml \
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./tmp/ansible/inventory.ini ./ansible/playbook.yml \
             --extra-vars '{
               "repo": "${{ vars.REPO }}",
               "app_dir": "${{ vars.APP_DIR }}",
