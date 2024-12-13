@@ -1,0 +1,55 @@
+name: Application CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - 'deployment'
+    types:
+      - closed
+
+jobs:
+  application-deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: deployment
+
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: terraform-apply.yml
+          name: infrastructure-artifacts
+          path: ./artifacts
+          workflow_conclusion: success
+          branch: infra_main 
+
+      - name: Setup SSH Key
+        run: |
+            mkdir ./terraform/
+            cp ./artifacts/terraform/${{ vars.KEY_PAIR_NAME }} ./terraform/
+            chmod 600 ./terraform/${{ vars.KEY_PAIR_NAME }}
+
+      - name: Update Inventory File
+        run: |
+          sed -i "s|ansible_ssh_private_key_file=\./${{ vars.KEY_PAIR_NAME }}|ansible_ssh_private_key_file=./terraform/${{ vars.KEY_PAIR_NAME }}|" ./artifacts/ansible/inventory.ini
+
+      - name: Set up Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "9.3.0"
+
+      - name: Run Application Deployment Playbook
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/ansible/inventory.ini ./ansible/playbook.yml \
+            --extra-vars '{
+              "repo": "${{ vars.REPO }}",
+              "app_dir": "${{ vars.APP_DIR }}",
+              "backend_env": ${{ toJSON(secrets.BACKEND_ENV) }},
+              "frontend_env": ${{ toJSON(secrets.FRONTEND_ENV) }},
+              "frontend_domain": "${{ vars.FRONTEND_DOMAIN }}",
+              "db_domain": "${{ vars.DB_DOMAIN }}",
+              "branch": "deployment"
+            }'
