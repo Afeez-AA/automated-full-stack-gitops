@@ -17,12 +17,14 @@ jobs:
         with:
           ref: deployment
 
-      - name: Download Infrastructure Artifacts
-        uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: terraform-apply.yml
           name: infrastructure-artifacts
           path: ./artifacts
-
+          workflow_conclusion: success
+          branch: infra_main 
 
       - name: Setup SSH Key
         run: |
