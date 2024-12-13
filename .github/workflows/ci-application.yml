@@ -62,9 +62,9 @@ jobs:
           
           echo -e "\n=== Attempting to update image tags ==="
           # Update backend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojo-devops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojo-devops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojo-devops:${{ env.IMAGE_TAG }}|" docker-compose.yml
           # Update frontend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojo-devops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:${{ env.IMAGE_TAG }}|" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojo-devops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojo-devops:${{ env.IMAGE_TAG }}|" docker-compose.yml
           
           echo -e "\n=== Updated docker-compose.yml content ==="
           cat docker-compose.yml
