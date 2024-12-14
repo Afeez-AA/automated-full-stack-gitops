@@ -1,6 +1,7 @@
 name: Application CD Pipeline
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - 'deployment'
