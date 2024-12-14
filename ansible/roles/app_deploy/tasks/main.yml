@@ -26,8 +26,8 @@
 
 - name: Check manifest issue
   shell: |
-    docker manifest inspect afeez511/frontend-dojodevops:{{ IMAGE_TAG }} || echo "Frontend manifest not found"
-    docker manifest inspect afeez511/backend-dojodevops:{{ IMAGE_TAG }} || echo "Backend manifest not found"
+    docker manifest inspect afeez511/frontend-dojodevops:{{ image_tag }} || echo "Frontend manifest not found"
+    docker manifest inspect afeez511/backend-dojodevops:{{ image_tag }} || echo "Backend manifest not found"
   register: manifest_check
 
 - name: Clean up problematic images
