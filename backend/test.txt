@@ -1,8 +1,1 @@
 it should work now
-docker compose image issue
-Final
-weak
-test
-test
-test
-test

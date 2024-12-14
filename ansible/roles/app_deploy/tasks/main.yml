@@ -24,6 +24,16 @@
     dest: "{{ app_dir }}/docker-compose.yml"
     mode: '0644'
 
+
+- name: Pre-deployment cleanup
+  shell: |
+    # Try to stop any existing application containers (won't fail if none exist)
+    docker compose down || true
+    
+    # Safely try to remove old application images (won't fail if no images exist)
+    docker images ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }} -q | xargs -r docker rmi || true
+    docker images ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }} -q | xargs -r docker rmi || true
+
 - name: Bring up the application stack
   command: docker compose up -d
   args:
