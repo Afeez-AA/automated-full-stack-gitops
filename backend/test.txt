@@ -1,1 +1,2 @@
 it should work now
+docker compose image issue

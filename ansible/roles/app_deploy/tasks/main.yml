@@ -24,7 +24,22 @@
     dest: "{{ app_dir }}/docker-compose.yml"
     mode: '0644'
 
-- name: Bring up the application stack
-  command: docker compose up -d
+- name: Pull Docker images explicitly
+  shell: docker compose pull
+  args:
+    chdir: "{{ app_dir }}"
+  register: pull_output
+
+- name: Debug pull output
+  debug:
+    var: pull_output
+
+- name: Stop existing containers
+  shell: docker compose down
+  args:
+    chdir: "{{ app_dir }}"
+
+- name: Start application stack
+  shell: docker compose up -d
   args:
     chdir: "{{ app_dir }}"
