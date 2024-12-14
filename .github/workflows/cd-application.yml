@@ -48,7 +48,9 @@ jobs:
               "backend_env": ${{ toJSON(secrets.BACKEND_ENV) }},
               "frontend_env": ${{ toJSON(secrets.FRONTEND_ENV) }},
               "frontend_domain": "${{ vars.FRONTEND_DOMAIN }}",
+              "DOCKERHUB_USERNAME": "${{ secrets.DOCKERHUB_USERNAME }}",
+              "FRONTEND_IMAGE": "frontend-dojodevops",
+              "BACKEND_IMAGE": "backend-dojodevops",
               "db_domain": "${{ vars.DB_DOMAIN }}",
-              "image_tag": "${{ env.IMAGE_TAG }}",
               "branch": "deployment"
             }'
