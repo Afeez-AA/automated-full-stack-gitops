@@ -13,6 +13,8 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   IMAGE_TAG: 1.0.${{ github.run_number }}
+  FRONTEND_IMAGE: frontend-dojodevops
+  BACKEND_IMAGE: backend-dojodevops
 
 jobs:
   build-and-push:
@@ -37,20 +39,19 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:${{ env.IMAGE_TAG }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:latest
+
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:${{ env.IMAGE_TAG }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:latest
-      - name: Debug Docker Images
-        run: |
-          echo "=== Docker Images ==="
-          sudo docker images
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:latest
+
+
       - name: Update docker-compose.yml
         run: |
           echo "=== Current docker-compose template content ==="
@@ -58,9 +59,9 @@ jobs:
           
           echo -e "\n=== Attempting to update image tags ==="
           # Update backend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/backend-dojodevops:${{ env.IMAGE_TAG }}|" ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}|" ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
           # Update frontend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/frontend-dojodevops:${{ env.IMAGE_TAG }}|" ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}|" ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
           
           echo -e "\n=== Updated docker-compose template content ==="
           cat ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
@@ -75,6 +76,7 @@ jobs:
             echo "Changes detected in docker-compose template:"
             git diff ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
           fi
+
       # Using GitHub's default token for authentication
       - name: Commit and push updated docker-compose
         run: |
