@@ -49,5 +49,6 @@ jobs:
               "frontend_env": ${{ toJSON(secrets.FRONTEND_ENV) }},
               "frontend_domain": "${{ vars.FRONTEND_DOMAIN }}",
               "db_domain": "${{ vars.DB_DOMAIN }}",
+              "image_tag": "${{ env.IMAGE_TAG }}",
               "branch": "deployment"
             }'
