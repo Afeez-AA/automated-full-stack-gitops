@@ -24,25 +24,33 @@
     dest: "{{ app_dir }}/docker-compose.yml"
     mode: '0644'
 
-- name: Check manifest issue
-  shell: |
-    docker manifest inspect afeez511/frontend-dojodevops:{{ image_tag }} || echo "Frontend manifest not found"
-    docker manifest inspect afeez511/backend-dojodevops:{{ image_tag }} || echo "Backend manifest not found"
-  register: manifest_check
+- name: Check disk space
+  shell: df -h
+  register: disk_space
 
-- name: Clean up problematic images
-  shell: |
-    # Force remove all tags of the images
-    docker rmi -f $(docker images afeez511/frontend-dojodevops -q)
-    docker rmi -f $(docker images afeez511/backend-dojodevops -q)
+- name: Display disk space
+  debug:
+    var: disk_space.stdout_line
     
-    # Clean any dangling images
-    docker image prune -f
-  args:
-    chdir: "{{ app_dir }}"
-  when: "'not found' in manifest_check.stdout"
+- name: Clean up disk space
+  shell: |
+    # Remove unused containers
+    docker container prune -f
+    # Remove unused volumes
+    docker volume prune -f
+    # Remove specific old images
+    docker images | grep "afeez511/frontend-dojodevops\|afeez511/backend-dojodevops" | awk '{print $1 ":" $2}' | xargs -r docker rmi -f
+    # Remove unused images but keep monitoring images
+    docker images | grep -v "prometheus\|grafana\|loki\|promtail\|cadvisor\|traefik" | awk '{print $1 ":" $2}' | xargs -r docker rmi -f
+    # Clean build cache
+    docker builder prune -f
+  register: cleanup_output
 
-- name: Deploy application stack with retry
+- name: Display cleanup output
+  debug:
+    var: cleanup_output.stdout_line
+
+- name: Deploy application stack
   block:
     - name: Try deployment
       shell: |
@@ -54,7 +62,12 @@
   rescue:
     - name: Handle manifest error
       shell: |
-        docker system prune -f
+        # Stop only application containers
+        docker compose down
+        # Remove only application images
+        docker rmi -f afeez511/frontend-dojodevops:{{ image_tag }} || true
+        docker rmi -f afeez511/backend-dojodevops:{{ image_tag }} || true
+        # Try deploy again
         docker compose pull --quiet
         docker compose up -d --force-recreate
       args:
