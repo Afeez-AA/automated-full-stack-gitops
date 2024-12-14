@@ -24,23 +24,38 @@
     dest: "{{ app_dir }}/docker-compose.yml"
     mode: '0644'
 
-- name: Remove existing application images
+- name: Check manifest issue
   shell: |
-    # Remove specific images using grep to match the repository
-    docker images | grep "afeez511/frontend-dojodevops\|afeez511/backend-dojodevops" | awk '{print $1 ":" $2}' | xargs -r docker rmi -f
-  ignore_errors: yes  # In case images are in use or don't exist
+    docker manifest inspect afeez511/frontend-dojodevops:{{ IMAGE_TAG }} || echo "Frontend manifest not found"
+    docker manifest inspect afeez511/backend-dojodevops:{{ IMAGE_TAG }} || echo "Backend manifest not found"
+  register: manifest_check
 
-- name: Pull fresh images
-  shell: docker compose pull
+- name: Clean up problematic images
+  shell: |
+    # Force remove all tags of the images
+    docker rmi -f $(docker images afeez511/frontend-dojodevops -q)
+    docker rmi -f $(docker images afeez511/backend-dojodevops -q)
+    
+    # Clean any dangling images
+    docker image prune -f
   args:
     chdir: "{{ app_dir }}"
+  when: "'not found' in manifest_check.stdout"
 
-- name: Stop existing containers
-  shell: docker compose down
-  args:
-    chdir: "{{ app_dir }}"
-
-- name: Start application stack
-  shell: docker compose up -d
-  args:
-    chdir: "{{ app_dir }}"
+- name: Deploy application stack with retry
+  block:
+    - name: Try deployment
+      shell: |
+        # Clean pull and deploy
+        docker compose pull --quiet
+        docker compose up -d --force-recreate
+      args:
+        chdir: "{{ app_dir }}"
+  rescue:
+    - name: Handle manifest error
+      shell: |
+        docker system prune -f
+        docker compose pull --quiet
+        docker compose up -d --force-recreate
+      args:
+        chdir: "{{ app_dir }}"
