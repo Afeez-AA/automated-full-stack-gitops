@@ -24,15 +24,16 @@
     dest: "{{ app_dir }}/docker-compose.yml"
     mode: '0644'
 
-- name: Pull Docker images explicitly
-  shell: docker compose pull
-  args:
-    chdir: "{{ app_dir }}"
-  register: pull_output
+- name: Remove existing application images
+  shell: |
+    # Remove specific images using grep to match the repository
+    docker images | grep "afeez511/frontend-dojodevops\|afeez511/backend-dojodevops" | awk '{print $1 ":" $2}' | xargs -r docker rmi -f
+  ignore_errors: yes  # In case images are in use or don't exist
 
-- name: Debug pull output
-  debug:
-    var: pull_output
+# - name: Pull fresh images
+#   shell: docker compose pull
+#   args:
+#     chdir: "{{ app_dir }}"
 
 - name: Stop existing containers
   shell: docker compose down
