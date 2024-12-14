@@ -25,16 +25,15 @@
     mode: '0644'
 
 
-- name: Pre-deployment cleanup
+- name: Deploy application stack
   shell: |
     # Try to stop any existing application containers (won't fail if none exist)
     docker compose down || true
-    
-    # Safely try to remove old application images (won't fail if no images exist)
-    docker images ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }} -q | xargs -r docker rmi || true
-    docker images ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }} -q | xargs -r docker rmi || true
 
-- name: Bring up the application stack
-  command: docker compose up -d
+    # Safely try to remove old application images (won't fail if no images exist)
+    docker images {{ DOCKERHUB_USERNAME }}/{{ FRONTEND_IMAGE }} -q | xargs -r docker rmi || true
+    docker images {{ DOCKERHUB_USERNAME }}/{{ BACKEND_IMAGE }} -q | xargs -r docker rmi || true
+    
+    docker compose up -d --force-recreate
   args:
     chdir: "{{ app_dir }}"
