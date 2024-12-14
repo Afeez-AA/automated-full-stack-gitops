@@ -24,51 +24,7 @@
     dest: "{{ app_dir }}/docker-compose.yml"
     mode: '0644'
 
-- name: Check disk space
-  shell: df -h
-  register: disk_space
-
-- name: Display disk space
-  debug:
-    var: disk_space.stdout_line
-    
-- name: Clean up disk space
-  shell: |
-    # Remove unused containers
-    docker container prune -f
-    # Remove unused volumes
-    docker volume prune -f
-    # Remove specific old images
-    docker images | grep "afeez511/frontend-dojodevops\|afeez511/backend-dojodevops" | awk '{print $1 ":" $2}' | xargs -r docker rmi -f
-    # Remove unused images but keep monitoring images
-    docker images | grep -v "prometheus\|grafana\|loki\|promtail\|cadvisor\|traefik" | awk '{print $1 ":" $2}' | xargs -r docker rmi -f
-    # Clean build cache
-    docker builder prune -f
-  register: cleanup_output
-
-- name: Display cleanup output
-  debug:
-    var: cleanup_output.stdout_line
-
-- name: Deploy application stack
-  block:
-    - name: Try deployment
-      shell: |
-        # Clean pull and deploy
-        docker compose pull --quiet
-        docker compose up -d --force-recreate
-      args:
-        chdir: "{{ app_dir }}"
-  rescue:
-    - name: Handle manifest error
-      shell: |
-        # Stop only application containers
-        docker compose down
-        # Remove only application images
-        docker rmi -f afeez511/frontend-dojodevops:{{ image_tag }} || true
-        docker rmi -f afeez511/backend-dojodevops:{{ image_tag }} || true
-        # Try deploy again
-        docker compose pull --quiet
-        docker compose up -d --force-recreate
-      args:
-        chdir: "{{ app_dir }}"
+- name: Bring up the application stack
+  command: docker compose up -d
+  args:
+    chdir: "{{ app_dir }}"
