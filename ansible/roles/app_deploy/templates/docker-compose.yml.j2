@@ -1,6 +1,6 @@
 services:
   backend:
-    image: afeez511/backend-dojodevops:1.0.39
+    image: afeez511/backend-dojodevops:1.0.40
     container_name: backend_fastapi_app
     labels:
       - traefik.enable=true
@@ -24,7 +24,7 @@ services:
       - shared-network
 
   frontend:
-    image: afeez511/frontend-dojodevops:1.0.39
+    image: afeez511/frontend-dojodevops:1.0.40
     container_name: frontend_nodejs_app
     labels:
       - "traefik.enable=true"
