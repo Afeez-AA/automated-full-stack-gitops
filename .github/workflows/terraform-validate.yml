@@ -6,7 +6,7 @@ on:
   push:
     branches:
       - infra_features # Trigger on pushes to infra_features branch
-    path:
+    paths:
       - 'terraform/**' # Only trigger if files in the terraform directory change
 
 env:
