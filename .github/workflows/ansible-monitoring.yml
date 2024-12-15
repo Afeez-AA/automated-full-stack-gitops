@@ -19,6 +19,12 @@ jobs:
           ref: infra_main  # Explicitly checkout infra_main branch
           fetch-depth: 0   # Get full history
 
+      - name: Download Ansible setup artifacts
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: infrastructure-artifacts
+          path: ./artifacts
+          
       - name: Download action indicator artifacts
         uses: dawidd6/action-download-artifact@v3
         with:
@@ -35,11 +41,7 @@ jobs:
             exit 0
           fi
 
-      - name: Download Ansible setup artifacts
-        uses: dawidd6/action-download-artifact@v3
-        with:
-          name: infrastructure-artifacts
-          path: ./artifacts
+ 
       
       # Copy the key to the terraform directory
       - name: Setup SSH Key
