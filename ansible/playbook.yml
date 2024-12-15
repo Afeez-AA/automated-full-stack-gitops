@@ -1,0 +1,8 @@
+---
+- name: Setting up monitoring servers
+  hosts: all
+  become: yes
+  roles:
+    - docker
+    - file_setup
+    - monitoring_setup
