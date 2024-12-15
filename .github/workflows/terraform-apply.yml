@@ -88,6 +88,7 @@ jobs:
           retention-days: 1
 
       - name: Save Infrastructure Details as Secrets
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'destroy'
         run: |
           # First check if files exist
           echo "Checking infrastructure files..."
