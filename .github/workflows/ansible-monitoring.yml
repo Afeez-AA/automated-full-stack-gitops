@@ -19,29 +19,23 @@ jobs:
           ref: infra_main  # Explicitly checkout infra_main branch
           fetch-depth: 0   # Get full history
 
-      - name: Download Ansible setup artifacts
+      - name: Download artifacts
         uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: terraform-apply.yml
+          workflow_conclusion: success
           name: infrastructure-artifacts
           path: ./artifacts
-          
-      - name: Download action indicator artifacts
-        uses: dawidd6/action-download-artifact@v3
-        with:
-          name: action-indicator
-          path: ./artifacts
-
+ 
       - name: Check Action Indicator
         id: check-action
         run: |
-          ACTION=$(cat ./artifacts/action_indicator.txt)
+          ACTION=$(cat ./artifacts/ansible/action_indicator.txt)
           echo "Action: $ACTION"
           if [ "$ACTION" != "apply" ]; then
             echo "Monitoring stack deployment skipped due to action: $ACTION"
             exit 0
           fi
-
- 
       
       # Copy the key to the terraform directory
       - name: Setup SSH Key
