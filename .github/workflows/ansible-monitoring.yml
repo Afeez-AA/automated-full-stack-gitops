@@ -19,12 +19,12 @@ jobs:
           ref: infra_main  # Explicitly checkout infra_main branch
           fetch-depth: 0   # Get full history
 
-      - name: Download action indicator artifacts
+      - name: Download Ansible setup artifacts
         uses: dawidd6/action-download-artifact@v3
         with:
-          name: action-indicator
+          name: infrastructure-artifacts
           path: ./artifacts
-
+ 
       - name: Check Action Indicator
         id: check-action
         run: |
@@ -34,12 +34,6 @@ jobs:
             echo "Monitoring stack deployment skipped due to action: $ACTION"
             exit 0
           fi
-
-      - name: Download Ansible setup artifacts
-        uses: dawidd6/action-download-artifact@v3
-        with:
-          name: infrastructure-artifacts
-          path: ./artifacts
       
       # Copy the key to the terraform directory
       - name: Setup SSH Key
