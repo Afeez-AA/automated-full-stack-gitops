@@ -112,3 +112,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          
+      - name: Create Action Indicator
+        run: echo ${{ github.event.inputs.action }} > action_indicator.txt
+
+      - name: Upload Action Indicator
+        uses: actions/upload-artifact@v4
+        with:
+          name: action-indicator
+          path: action_indicator.txt
