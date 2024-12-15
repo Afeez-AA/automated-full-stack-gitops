@@ -55,26 +55,26 @@ jobs:
       - name: Update docker-compose.yml
         run: |
           echo "=== Current docker-compose template content ==="
-          cat ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          cat docker-compose.yml.j2
           
           echo -e "\n=== Attempting to update image tags ==="
           # Update backend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}|" ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}|" docker-compose.yml.j2
           # Update frontend image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}|" ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}|" docker-compose.yml.j2
           
           echo -e "\n=== Updated docker-compose template content ==="
-          cat ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          cat docker-compose.yml.j2
           
           # Check if any changes were made
-          if git diff --quiet ./ansible/roles/app_deploy/templates/docker-compose.yml.j2; then
+          if git diff --quiet docker-compose.yml.j2; then
             echo "No changes were made to docker-compose template"
             echo "Current content of docker-compose template:"
-            cat ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+            cat docker-compose.yml.j2
             exit 1
           else
             echo "Changes detected in docker-compose template:"
-            git diff ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+            git diff docker-compose.yml.j2
           fi
 
       # Using GitHub's default token for authentication
@@ -82,6 +82,6 @@ jobs:
         run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git add ./ansible/roles/app_deploy/templates/docker-compose.yml.j2
+          git add docker-compose.yml.j2
           git commit -m "Update image tags to ${{ env.IMAGE_TAG }}"
           git push origin integration

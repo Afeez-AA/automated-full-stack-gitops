@@ -1,6 +1,0 @@
----
-- name: Setting up application stack
-  hosts: web_servers
-  become: yes
-  roles:
-    - app_deploy
