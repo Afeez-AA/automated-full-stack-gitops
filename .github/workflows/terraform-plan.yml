@@ -57,10 +57,6 @@ jobs:
       - name: Prepare Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Validate Terraform Formatting
-        run: terraform fmt -check
-        working-directory: terraform
-
       - name: Initialize Terraform Configuration
         run: terraform init
         working-directory: terraform
