@@ -87,8 +87,8 @@ jobs:
             terraform/${{ vars.KEY_PAIR_NAME }}
           retention-days: 1
 
-
       - name: Save Infrastructure Details as Secrets
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'destroy'
         run: |
           # First check if files exist
           echo "Checking infrastructure files..."
@@ -112,3 +112,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          
+      - name: Create Action Indicator
+        run: echo ${{ github.event.inputs.action }} > action_indicator.txt
+
+      - name: Upload Action Indicator
+        uses: actions/upload-artifact@v4
+        with:
+          name: action-indicator
+          path: action_indicator.txt

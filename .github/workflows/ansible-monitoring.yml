@@ -19,6 +19,22 @@ jobs:
           ref: infra_main  # Explicitly checkout infra_main branch
           fetch-depth: 0   # Get full history
 
+      - name: Download Action Indicator
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: action-indicator
+          path: ./artifacts
+
+      - name: Check Action Indicator
+        id: check-action
+        run: |
+          ACTION=$(cat ./artifacts/action_indicator.txt)
+          echo "Action: $ACTION"
+          if [ "$ACTION" != "apply" ]; then
+            echo "Monitoring stack deployment skipped due to action: $ACTION"
+            exit 0
+          fi
+
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v3
         with:
@@ -27,23 +43,6 @@ jobs:
           name: infrastructure-artifacts
           path: ./artifacts
       
-      - name: Debug Workflow Information
-        run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Workflow run head branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Workflow run head sha: ${{ github.event.workflow_run.head_sha }}"
-          echo "Base branch: ${{ github.event.workflow_run.head_repository.default_branch }}"
-          echo "Event workflow reference: ${{ github.event.workflow.reference }}"
-          
-      # - name: Get Source Branch
-      #   run: |
-      #     echo "SOURCE_BRANCH=infra_main" >> $GITHUB_ENV
-
-      - name: Debug Artifacts
-        run: |
-          echo "Listing artifacts directory:"
-          ls -la ./artifacts/
-
       # Copy the key to the terraform directory
       - name: Setup SSH Key
         run: |
@@ -60,20 +59,7 @@ jobs:
         with:
           version: "9.3.0"
 
-      - name: Debug Branch Information Before Ansible
-        run: |
-          echo "Current directory structure:"
-          pwd
-          ls -la
-          echo "Current branch in workflow:"
-          git branch --show-current
-          echo "Contents of ansible directory:"
-          ls -la ./ansible
-          echo "Contents of playbook.yml:"
-          cat ./ansible/playbook.yml
-          echo "Git status:"
-          git status
-      
+
       - name: Run Ansible Playbook
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./artifacts/ansible/inventory.ini ./ansible/playbook.yml \
