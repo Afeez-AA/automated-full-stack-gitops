@@ -121,4 +121,4 @@ jobs:
         with:
           name: action-indicator
           path: action_indicator.txt
-        retention-days: 1
+          retention-days: 1
